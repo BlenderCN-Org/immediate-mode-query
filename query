@@ -7,7 +7,7 @@ function query()
   grep -n --color=never \
     -e fdrawbox \
     -e fdrawbox_filled \
-    -e fdrawcheckboard \
+    -e fdrawcheckerboard \
     -e fdrawline \
     -e glBegin\( \
     -e glColor \
