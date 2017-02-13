@@ -18,6 +18,10 @@ function query()
     -e sdrawbox \
     -e UI_ThemeColor \
     -e glColor \
+    -e glEnableClientState \
+    -e glVertexPointer \
+    -e glDisableClientState \
+    -e glRect \
     $FILE_COMPLETE
 }
 
