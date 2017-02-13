@@ -1,0 +1,15 @@
+#!/bin/bash
+
+START="Oct 3 2016 02:00:00"
+END="Feb 13 2017 02:00:00"
+
+
+dSTART=$(date -d "$START" +%Y%m%d)
+dEND=$(date -d "$END" +%Y%m%d)
+
+dDATE=$dSTART
+
+while [ "$dDATE" -lt "$dEND" ]; do
+  dDATE=$(date -d "$dDATE + 1 day" +%Y%m%d)
+  grafista-immediate-mode "`date -d \"$dDATE\"`"
+ done
