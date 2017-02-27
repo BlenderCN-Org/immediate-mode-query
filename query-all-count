@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# find all related files and their outdate lines
+
+FILES=$(find . -name "*.[c|cpp|h|m|mm]*" -print | grep -v "\.pyc" | grep -v "\.git" | grep -v "\.svn" | grep -v ".swp" | grep -v "~" | sort)
+
+for FILE in $FILES; do
+   COUNT=$(grep -n --color=never -H \
+    -e fdrawbox \
+    -e fdrawbox_filled \
+    -e fdrawcheckerboard \
+    -e fdrawline \
+    -e glBegin\( \
+    -e glColor \
+    -e glDisableClientState \
+    -e glEnableClientState \
+    -e glEnd\( \
+    -e glNormal \
+    -e glRect \
+    -e glTexCoord \
+    -e glVertex[^A] \
+    -e glVertexPointer \
+    -e sdrawline \
+    -e sdrawbox \
+    -e UI_ThemeColor \
+    . 2>/dev/null \
+    $FILE | wc -l)
+
+    if [ "$COUNT" != "0" ]; then
+      printf "%-50s [%3d]\n" $FILE $COUNT
+    fi
+done
