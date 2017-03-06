@@ -11,7 +11,7 @@ for FILE in $FILES; do
     -e fdrawcheckerboard \
     -e fdrawline \
     -e glBegin\( \
-    -e glColor \
+    -e glColor[^M] \
     -e glDisableClientState \
     -e glEnableClientState \
     -e glEnd\( \
