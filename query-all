@@ -59,7 +59,7 @@ find . -name "*.[c|cpp|h|m|mm]*" -print | grep -v "bgl\.c" | grep -v "\.pyc" | g
     -e GL_LIGHTING \
     -e GL_LINE_STIPPLE \
     -e GL_LUMINANCE \
-    -e GL_POINT_SPRITE \
+    -e GL_POINT_SPRITE[^_] \
     -e GL_TEXTURE_ENV_ \
     -e GL_TEXTURE_GEN_ \
     . 2>/dev/null | more

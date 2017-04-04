@@ -64,7 +64,7 @@ function query()
     -e GL_LIGHTING \
     -e GL_LINE_STIPPLE \
     -e GL_LUMINANCE \
-    -e GL_POINT_SPRITE \
+    -e GL_POINT_SPRITE[^_] \
     -e GL_TEXTURE_ENV_ \
     -e GL_TEXTURE_GEN_ \
     $FILE_COMPLETE
