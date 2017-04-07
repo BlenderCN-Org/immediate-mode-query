@@ -27,6 +27,13 @@ GLAPI GLint GLAPIENTRY glRenderMode (GLenum mode);
 
 Output:
 _GL_INT DO_NOT_USE_glRenderMode (GLenum mode) _GL_INT_RET
+
+
+Input C:
+#define GL_SOURCE2_RGB DO_NOT_USE_GL_SOURCE2_RGB
+
+Output:
+#define DO_NOT_USE_GL_SOURCE2_RGB 0
 """
 
 def get_gl_type(_type):
@@ -50,11 +57,16 @@ def get_rest(parts):
 
 
 def main():
+    defines = []
     inputs = []
+
     with open('gl-deprecated.h', 'r') as f:
         for line in f:
             if line.startswith("#define gl"):
                 inputs.append(line[len("#define "):-1].split(' ')[0])
+            elif line.startswith("#define GL_"):
+                defines.append("#define {0} 0".format(line.split(' ')[2][:-1]))
+
 
     lookups = {}
     with open('glew.h', 'r') as f:
@@ -83,7 +95,32 @@ def main():
             mismatches.append(i)
 
     with open('stubs.c', 'w') as f:
+        f.write("""
+/**
+ * List automatically generated from `gl-deprecated.h` and `glew.h`
+ */
+
+/**
+ * ENUM values
+ */
+""")
+        f.write('\n'.join(defines))
+
+        f.write("""
+
+/**
+ * Functions
+ */
+""")
         f.write('\n'.join(matches))
+
+        f.write("""
+
+/**
+ * End of automatically generated list
+ */
+""")
+
 
     with open('stubs.err', 'w') as f:
         f.write('\n'.join(mismatches))
