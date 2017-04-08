@@ -47,7 +47,7 @@ PREAMBLE = """
 /**
  * List automatically generated from `gl-deprecated.h` and `glew.h`
  */
- """
+"""
 
 ENUMS = """
 
@@ -213,9 +213,12 @@ def main(argv):
     # Otherwise we shouldn't bother
     all_files = all_files_get(filepaths['base_blender'])
     print("Grepping the enums")
-    blender_enums = {e[1] for e in enums if found_in_blender(all_files, e[0])}
+    blender_enums = [e[1] for e in enums if found_in_blender(all_files, e[0])]
     print("Grepping the functions")
-    blender_functions = {w for w in functions if found_in_blender(all_files, w)}
+    blender_functions = [w for w in functions if found_in_blender(all_files, w)]
+
+    blender_enums.sort()
+    blender_functions.sort()
 
     blender_funcs_okay = []
     blender_funcs_error = []
