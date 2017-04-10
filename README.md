@@ -29,7 +29,7 @@ Example:
 ```
 $ cd BLENDER_SOURCE_FOLDER
 $ cd source/blender
-$ query-all-count
+$ query-count
 ```
 
 Result:

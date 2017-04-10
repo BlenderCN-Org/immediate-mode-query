@@ -1,86 +1,203 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# for the official list of removed functions check:
-# https://www.khronos.org/registry/OpenGL/specs/gl/glspec33.core.pdf
+import os
+import re
 
-# Immediate Mode Check
-function query()
-{
-  FILE_COMPLETE=$1
-  grep -n --color=never \
-    -e fdrawbox \
-    -e fdrawbox_filled \
-    -e fdrawcheckerboard \
-    -e fdrawline \
-    -e sdrawline \
-    -e sdrawbox \
-    -e UI_ThemeColor \
-    -e glAlphaFunc \
-    -e glBegin\( \
-    -e glCallList \
-    -e glCallLists \
-    -e glColor[^M] \
-    -e glClipPlane \
-    -e glDeleteLists \
-    -e glDisableClientState \
-    -e glDrawPixels \
-    -e glEnableClientState \
-    -e glEnd\( \
-    -e glEndList \
-    -e glFeedbackBuffer \
-    -e glGenLists \
-    -e glInitNames \
-    -e glIsList \
-    -e glLight[if] \
-    -e glLineStipple \
-    -e glListBase \
-    -e glLoadName \
-    -e glMaterial[if] \
-    -e glNewList \
-    -e glNormal \
-    -e glPassThrough \
-    -e glPixelZoom \
-    -e glPolygonStipple \
-    -e glPopAttrib \
-    -e glPopClientAttrib \
-    -e glPopName \
-    -e glPushAttrib \
-    -e glPushClientAttrib \
-    -e glPushName \
-    -e glRasterPos \
-    -e glRect[if] \
-    -e glRenderMode \
-    -e glSelectBuffer \
-    -e glShadeModel \
-    -e glTexCoord \
-    -e glTexGen \
-    -e glVertex[^A] \
-    -e glVertexPointer \
-    -e glWindowPos \
-    -e GL_ACCUM_.*_BITS \
-    -e GL_ALPHA_TEST \
-    -e GL_COLOR_MATERIAL \
-    -e GL_DEPTH_TEXTURE_MODE \
-    -e GL_LIGHTING \
-    -e GL_LINE_STIPPLE \
-    -e GL_LUMINANCE \
-    -e GL_POINT_SPRITE[^_] \
-    -e GL_TEXTURE_ENV_ \
-    -e GL_TEXTURE_GEN_ \
-    $FILE_COMPLETE
-}
+import argparse
 
-if [ "$1" == "" ] ; then
-  echo "No file specified. Use: `query filename.c`. Exiting."
-  exit 0
-fi
+global filepath
 
-FILE=`find . -name $1`
+# Modified from SE to keep newlines
+# http://stackoverflow.com/a/18381470/432509
 
-if [ "$FILE"  == "" ]; then
-  echo "File not found!"
-  exit 0
-fi
+c_pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+c_regex = re.compile(c_pattern, re.MULTILINE | re.DOTALL)
 
-echo -e "Querying file:\n$FILE\n"
-query $FILE
+def remove_comments(string):
+    # first group captures quoted strings (double or single)
+    # second group captures comments (//single-line or /* multi-line */)
+    def _replacer(match):
+        # if the 2nd group (capturing comments) is not None,
+        # it means we have captured a non-quoted (real) comment string.
+        text =  match.group(2)
+        if text is not None:
+            # so we will return empty to remove the comment
+            return "\n" * text.count("\n")
+        else: # otherwise, we will return the 1st group
+            return match.group(1) # captured quoted-string
+    return c_regex.sub(_replacer, string)
+
+fn_patterns = (
+    r"fdrawbox",
+    r"fdrawbox_filled",
+    r"fdrawcheckerboard",
+    r"fdrawline",
+    r"sdrawline",
+    r"sdrawbox",
+    r"UI_ThemeColor",
+    r"glAlphaFunc",
+    r"glBegin\(",
+    r"glCallList",
+    r"glCallLists",
+    r"glColor[^M]",
+    r"glClipPlane",
+    r"glDeleteLists",
+    r"glDisableClientState",
+    r"glDrawPixels",
+    r"glEnableClientState",
+    r"glEnd\(",
+    r"glEndList",
+    r"glFeedbackBuffer",
+    r"glGenLists",
+    r"glInitNames",
+    r"glIsList",
+    r"glLight[if]",
+    r"glLineStipple",
+    r"glListBase",
+    r"glLoadName",
+    r"glMaterial[if]",
+    r"glNewList",
+    r"glNormal",
+    r"glPassThrough",
+    r"glPixelZoom",
+    r"glPolygonStipple",
+    r"glPopAttrib",
+    r"glPopClientAttrib",
+    r"glPopName",
+    r"glPushAttrib",
+    r"glPushClientAttrib",
+    r"glPushName",
+    r"glRasterPos",
+    r"glRect[if]",
+    r"glRenderMode",
+    r"glSelectBuffer",
+    r"glShadeModel",
+    r"glTexCoord",
+    r"glTexGen",
+    r"glVertex[^A]",
+    r"glVertexPointer",
+    r"glWindowPos",
+    r"GL_ACCUM_.*_BITS",
+    r"GL_ALPHA_TEST",
+    r"GL_COLOR_MATERIAL",
+    r"GL_DEPTH_TEXTURE_MODE",
+    r"GL_LIGHTING",
+    r"GL_LINE_STIPPLE",
+    r"GL_LUMINANCE",
+    r"GL_POINT_SPRITE[^_]",
+    r"GL_TEXTURE_ENV_",
+    r"GL_TEXTURE_GEN_",
+)
+
+fn_regex = re.compile(".*(" + "|".join(fn_patterns) + ").*", re.MULTILINE | re.DOTALL)
+
+def quick_check_source(filepath, code, args):
+    # early exit if we have nothing to do!
+    if fn_regex.match(code) is None:
+        return
+
+    code = remove_comments(code)
+    # to rewrite the file
+    # return code
+    if args.count:
+        count = 0
+        for l in code.splitlines():
+            m = fn_regex.match(l)
+            if m is not None:
+                count += 1
+        if count != 0:
+            print("%-50s [%3d]" % (filepath, count))
+    else:
+        for i, l in enumerate(code.splitlines()):
+            m = fn_regex.match(l)
+            if m is not None:
+                print("%s:%d:%s" % (filepath, i + 1, l))
+
+
+def scan_source_filepath(filepath, args):
+    with open(filepath, 'r', encoding="utf-8", errors="surrogateescape") as f:
+        code = f.read()
+        code = quick_check_source(filepath, code, args)
+    # with open(filepath, 'w', encoding="utf-8") as f:
+    #     f.write(code)
+
+
+def is_ignore(filepath):
+    f = os.path.basename(filepath)
+    if f in {"bgl.c"}:
+        return True
+    return False
+
+
+def scan_source_recursive(dirpath, args):
+    import os
+    from os.path import join, splitext
+
+    def source_list(path, filename_check=None):
+        for dirpath, dirnames, filenames in os.walk(path):
+
+            # skip '.svn'
+            if (dirpath[2:] if dirpath.startswith("." + os.sep) else dirpath).startswith("."):
+                continue
+
+            for filename in filenames:
+                filepath = join(dirpath, filename)
+                if filename_check is None or filename_check(filepath):
+                    yield filepath
+
+    def is_source(filename):
+        ext = splitext(filename)[1]
+        return (ext in {".c", ".inl", ".cpp", ".cxx", ".cc", ".hpp", ".hxx", ".h", ".hh"})
+
+    for filepath in sorted(source_list(dirpath, is_source)):
+        if is_ignore(filepath):
+            continue
+
+        scan_source_filepath(filepath, args)
+
+
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Check C/C++ code for conformance with blenders style guide:\n"
+            "http://wiki.blender.org/index.php/Dev:Doc/CodeStyle)")
+    )
+    parser.add_argument(
+        "paths",
+        nargs='*',
+        help="list of files or directories to check",
+    )
+    parser.add_argument(
+        "-c",
+        "--count",
+        action="store_true",
+        help="Only count per-file use",
+    )
+    return parser
+
+
+def main(argv=None):
+    import sys
+    import os
+
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = create_parser()
+    args = parser.parse_args(argv)
+    del argv
+    print(args)
+
+    for filepath in (args.paths or (".",)):
+        if os.path.isdir(filepath):
+            # recursive search
+            print("Query directory recursive:", filepath)
+            scan_source_recursive(filepath, args)
+        else:
+            # single file
+            print("Query file:", filepath)
+            scan_source_filepath(filepath, args)
+
+
+if __name__ == "__main__":
+    main()
